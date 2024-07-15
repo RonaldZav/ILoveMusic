@@ -1,0 +1,59 @@
+{
+  "name": "ilovemusic",
+  "version": "1.0.0",
+  "description": "Music Client",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.tuapp.id",
+    "productName": "ILoveMusic",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "views/",
+      "renderer.js",
+      "events/",
+      "assets/"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "keywords": [
+    "music",
+    "client",
+    "electron"
+  ],
+  "repository": "https://github.com/RonaldZav/ILoveMusic.git",
+  "author": "RonaldZav <ronaldzavaletapc@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "electron": "^31.2.0",
+    "electron-builder": "^24.13.3",
+    "fs": "^0.0.1-security",
+    "lavalink-client": "^2.2.0",
+    "node-fs": "^0.1.7",
+    "standart": "6.1.0"
+  },
+  "eslintConfig": {
+    "extends": "standard"
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "lavalink-client": "^2.2.0",
+    "node-fs": "^0.1.7"
+  }
+}
