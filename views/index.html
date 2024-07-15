@@ -1,31 +1,48 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="../assets/styles.css">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ILoveMusic</title>
 </head>
 <body>
 
+  <div class="loading-app">
+    <img src="../assets/icon.png"></img>
+  </div>
+
+  <div id="main-content" style="display: none;"></div>
+
   <div id="navbar"></div>
-  <div id="home"></div>
   <div id="footer"></div>
 
   <script>
-      function loadHTML(elementId, url) {
-          fetch(url)
-              .then(response => response.text())
-              .then(data => {
-                  document.getElementById(elementId).innerHTML = data;
-              })
-              .catch(error => console.error('Error loading the HTML:', error));
-      }
+    function loadHTML(elementId, url) {
+      fetch(url)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById(elementId).innerHTML = data;
+        })
+        .catch(error => console.error('Error loading the HTML:', error));
+    }
 
-      loadHTML('navbar', 'navbar.html');
-      loadHTML('footer', 'footer.html');
+    // Espera a que la página y los elementos principales estén completamente cargados
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var loadingApp = document.querySelector('.loading-app');
+        if (loadingApp) {
+          loadingApp.remove(); // Elimina completamente el div de loading
+        }
+
+        // Cargar el contenido de navbar y footer después de eliminar el div de loading
+        loadHTML('navbar', 'navbar.html');
+        loadHTML('footer', 'footer.html');
+
+        // Mostrar el contenido principal una vez cargados los elementos adicionales
+        document.getElementById('main-content').style.display = 'block';
+      }, 2000); // Esperar 2 segundos antes de eliminar el div de loading
+    });
   </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+console.log(1);
+
 module.exports = {
     name: "navegator-search",
     type: "click",
