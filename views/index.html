@@ -42,5 +42,14 @@
       }, 2000);
     });
   </script>
+  <script>
+      document.addEventListener('click', (event) => {
+          if (event.target.classList.contains('event-button')) {
+              const eventName = event.target.getAttribute('data-event');
+              const query = document.getElementById('query').value;
+              window.api.triggerEvent(eventName, { query });
+          }
+      });
+  </script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 module.exports = {
     name: "navegator-search",
     type: "click",
-    run: async (event) => { 
+    run: async (eventData) => {
+        console.log(`El botón fue clickeado con la consulta: ${eventData.query}`);
 
         console.log("1234");
 
