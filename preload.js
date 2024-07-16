@@ -1,17 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const events = require('./eventsLoader.js');
 
-contextBridge.exposeInMainWorld('electronAPI', {
-  getEvents: async () => {
-    return await ipcRenderer.invoke('getEvents');
-  },
-  "navegator-search": async (query) => {
-    const result = await ipcRenderer.invoke('navegator-search', query);
-    if (result.success) {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const source = audioContext.createMediaElementSource(new Audio(result.track.url));
-      source.connect(audioContext.destination);
-      source.mediaElement.play();
+// Exponer una API segura al contexto de la página
+contextBridge.exposeInMainWorld('api', {
+    triggerEvent: (eventName, eventData) => {
+        ipcRenderer.send('trigger-event', eventName, eventData);
     }
-    return result;
-  },
 });
+
+// Registrar eventos
+for (const [eventName, event] of Object.entries(events)) {
+    ipcRenderer.on(eventName, (e, eventData) => {
+        event.run(eventData);
+    });
+}

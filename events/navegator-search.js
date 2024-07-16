@@ -1,11 +1,9 @@
-console.log(1);
-
 module.exports = {
     name: "navegator-search",
     type: "click",
     run: async (event) => { 
 
-        console.log("1234")
+        console.log("1234");
 
     const query = event.value;
     const result = await window.electronAPI.play(query);

@@ -17,7 +17,7 @@
       "main.js",
       "preload.js",
       "views/",
-      "renderer.js",
+      "eventsLoader.js",
       "events/",
       "assets/"
     ],

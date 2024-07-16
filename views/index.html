@@ -32,16 +32,14 @@
       setTimeout(function() {
         var loadingApp = document.querySelector('.loading-app');
         if (loadingApp) {
-          loadingApp.remove(); // Elimina completamente el div de loading
+          loadingApp.remove();
         }
 
-        // Cargar el contenido de navbar y footer después de eliminar el div de loading
         loadHTML('navbar', 'navbar.html');
         loadHTML('footer', 'footer.html');
 
-        // Mostrar el contenido principal una vez cargados los elementos adicionales
         document.getElementById('main-content').style.display = 'block';
-      }, 2000); // Esperar 2 segundos antes de eliminar el div de loading
+      }, 2000);
     });
   </script>
 </body>

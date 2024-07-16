@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('node:path')
+const events = require('./eventsLoader');
 const { LavalinkManager } = require('lavalink-client');
 
 function createWindow () {
@@ -12,31 +13,29 @@ function createWindow () {
     title: "ILoveMusic",
     icon: path.join(__dirname, 'assets/icon.png'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
-    }
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      enableRemoteModule: false,
+  }
   })
 
   win.loadFile('views/index.html')
+
+  win.webContents.on('did-finish-load', () => {
+    for (const [eventName, event] of Object.entries(events)) {
+        win.webContents.on(event.type, (e) => {
+            // Verificar si el id del elemento que generó el evento coincide con el nombre del evento
+            if (e.target && e.target.id === eventName) {
+                event.run(e);
+            }
+        });
+    }
+  });
+
 }
 
 app.whenReady().then(() => {
   app.whenReady().then(createWindow);
-
-ipcMain.handle('getEvents', async () => {
-  const eventsFiles = readdirSync('./events/').filter(files => files.endsWith('.js'));
-  let events = [];
-
-  for (const file of eventsFiles) {
-    const event = require(`./events/${file}`);
-    events.push({
-      name: event.name,
-      description: event.description,
-      type: event.type,
-    });
-  }
-
-  return events;
-});
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
