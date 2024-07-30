@@ -1,8 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Exponer una API segura al contexto de la página
-contextBridge.exposeInMainWorld('api', {
-    triggerEvent: (eventName, eventData) => {
-        ipcRenderer.send(eventName, eventData);
-    }
+contextBridge.exposeInMainWorld('electronAPI', {
+  onButtonClick: (callback) => {
+    window.addEventListener('click', (event) => {
+      if (event.target.tagName === 'BUTTON') {
+        callback(event.target.id);
+      }
+    });
+  }
 });
