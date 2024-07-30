@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const YTDlpWrap = require('yt-dlp-wrap').default;
-const { PassThrough } = require('stream');
+const { spawn } = require('child_process');
 const Speaker = require('speaker');
 
 // Ruta al binario de yt-dlp
@@ -45,34 +45,88 @@ app.on('window-all-closed', () => {
 // Manejo del evento youtube-query
 ipcMain.on('youtube-query', async (event, query) => {
     console.log('Received query from renderer:', query);
+    console.log('Playing audio from query:', query);
 
     try {
         // Inicializar yt-dlp
         const ytDlpWrap = new YTDlpWrap(ytDlpBinaryPath);
 
-        // Ejecutar yt-dlp y obtener el stream de audio
-        const readableStream = ytDlpWrap.execStream([
+        // Obtener la duración del video
+        const videoInfo = await ytDlpWrap.exec(['--get-duration', query]);
+
+        // Asegurarse de que videoInfo sea una cadena
+        const durationStr = videoInfo.toString().trim();
+        const duration = parseFloat(durationStr);
+        if (isNaN(duration)) {
+            throw new Error('No se pudo obtener la duración del video');
+        }
+
+        // Convertir la duración a milisegundos
+        const durationMs = duration * 1000;
+
+        // Ejecutar yt-dlp y obtener el stream de audio en formato webm
+        const ytDlpStream = ytDlpWrap.execStream([
             query,
-            '-f', 'bestaudio/best', // Obtén el mejor audio disponible
-            '--no-playlist', // Si deseas obtener solo el video en lugar de una lista de reproducción
-            '--audio-format', 'mp3' // Especificar formato para evitar problemas de codec
+            '-f', 'bestaudio/best',
+            '--no-playlist'
+        ]);
+
+        // Convertir el audio webm a pcm_s16le con ffmpeg
+        const ffmpeg = spawn('ffmpeg', [
+            '-analyzeduration', '1M', // Ajustar la duración del análisis
+            '-probesize', '1M', // Ajustar el tamaño del buffer de análisis
+            '-i', 'pipe:0', // Leer desde el stdin
+            '-f', 's16le',
+            '-ac', '2',
+            '-ar', '44100',
+            'pipe:1' // Escribir al stdout
         ]);
 
         // Configurar el reproductor de audio
         const speaker = new Speaker({
-            channels: 2, // Cambia a 1 para mono si es necesario
+            channels: 2, // Estéreo
             bitDepth: 16,
             sampleRate: 44100
         });
 
-        // Reproducir el audio
-        readableStream.pipe(speaker);
+        // Conectar las tuberías
+        ytDlpStream.pipe(ffmpeg.stdin);
+        ffmpeg.stdout.pipe(speaker);
 
-        readableStream.on('error', (error) => {
-            console.error('Error in readableStream:', error);
+        // Manejar errores
+        ffmpeg.on('error', (error) => {
+            console.error('FFmpeg error:', error);
         });
 
-        console.log('Playing audio from query:', query);
+        ytDlpStream.on('error', (error) => {
+            console.error('yt-dlp stream error:', error);
+        });
+
+        speaker.on('error', (error) => {
+            console.error('Speaker error:', error);
+        });
+
+        // Capturar salida y errores de ffmpeg
+        ffmpeg.stderr.on('data', (data) => {
+            console.error(`FFmpeg stderr: ${data.toString()}`);
+        });
+
+        // Manejar el cierre de los flujos
+        ytDlpStream.on('close', () => {
+            console.log('yt-dlp stream closed');
+        });
+
+        ffmpeg.on('close', (code) => {
+            console.log('FFmpeg process closed with code:', code);
+        });
+
+        // Cerrar ffmpeg después del tiempo máximo
+        setTimeout(() => {
+            ffmpeg.kill();
+            console.log('FFmpeg process terminated due to timeout');
+        }, durationMs);
+
+        console.log('Streaming and converting audio...');
     } catch (error) {
         console.error('Error handling youtube-query:', error);
     }
