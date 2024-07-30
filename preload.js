@@ -7,5 +7,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         callback(event.target.id);
       }
     });
+  },
+  sendQuery: (query) => {
+    console.log('Sending query:', query); // Verifica si esta línea se imprime en la consola del renderer
+    ipcRenderer.send('youtube-query', query);
   }
 });

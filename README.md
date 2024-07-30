@@ -1,5 +1,5 @@
 # ILoveMusic 🎵
-ILoveMusic is a music client that uses LavaLink to work, it is still in a very early stage of its development. This repository is open to contributions.
+ILoveMusic is a music client that uses yt-dlp to work, it is still in a very early stage of its development. This repository is open to contributions.
 
 ## Preview (Demo)
 In this image you can see the idea in mind for this software.

@@ -1,15 +1,17 @@
-const { app, BrowserWindow, ipcMain, contextBridge } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const { LavalinkManager } = require('lavalink-client');
+const YTDlpWrap = require('yt-dlp-wrap').default;
+const { PassThrough } = require('stream');
+const Speaker = require('speaker');
 
+// Ruta al binario de yt-dlp
+const ytDlpBinaryPath = path.join(__dirname, 'utils/yt-dlp');
+
+// Crear la ventana principal
 function createWindow() {
     const win = new BrowserWindow({
         width: 800,
         height: 600,
-        minHeight: 600,
-        minWidth: 800,
-        maxHeight: 600,
-        maxWidth: 800,
         autoHideMenuBar: true,
         title: "ILoveMusic",
         icon: path.join(__dirname, 'assets/icon.png'),
@@ -17,6 +19,7 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             enableRemoteModule: false,
+            nodeIntegration: false
         }
     });
 
@@ -31,78 +34,46 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
-
-    // Configurar LavaLink
-    const node = new LavalinkManager({
-        nodes: [
-            {
-                host: 'buses.sleepyinsomniac.eu.org',
-                port: 80,
-                authorization: 'youshallnotpass',
-                id: "2008"
-            }
-        ],
-        sendToShard: (guildId, payload) =>
-            client.guilds.cache.get(guildId)?.shard?.send(payload),
-        client: {
-            id: "2008",
-            username: "ILoveMusic",
-        },
-        autoSkip: true,
-        playerOptions: {
-            clientBasedPositionUpdateInterval: 150,
-            defaultSearchPlatform: "ytmsearch",
-            volumeDecrementer: 0.75,
-            onDisconnect: {
-                autoReconnect: true, 
-                destroyPlayer: false 
-            },
-            onEmptyQueue: {
-                destroyAfterMs: 30_000, 
-            }
-        },
-        queueOptions: {
-            maxPreviousTracks: 25
-        },
-    }); 
-    
-    node.init({ id: "2008", username: "ILoveMusic" });
-
-    node.on('error', (error) => {
-        console.error('Lavalink node error:', error);
-    });
-
-    node.on('ready', () => {
-        console.log('Lavalink node is ready');
-        setupPlayer(); // Mueve la creación del reproductor aquí para asegurarte de que el nodo esté listo.
-    });
-
-    node.on('trackStart', (player, track) => {
-        console.log('Track started:', track.title);
-    });
-
-    node.on('trackEnd', (player, track, reason) => {
-        console.log('Track ended:', track.title, reason);
-    });
-
-    function setupPlayer() {
-        const player = node.players.get('myMusicPlayer') || node.createPlayer({
-            guildId: "2008", 
-            voiceChannelId: "42365236722", 
-            textChannelId: "464572345437453198", 
-            volume: 100,
-            instaUpdateFiltersFix: true,
-            applyVolumeAsFilter: false,
-        });
-
-        // Exponer el player al contexto del renderer
-        contextBridge.exposeInMainWorld('player', player);
-    }
-
 });
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
+    }
+});
+
+// Manejo del evento youtube-query
+ipcMain.on('youtube-query', async (event, query) => {
+    console.log('Received query from renderer:', query);
+
+    try {
+        // Inicializar yt-dlp
+        const ytDlpWrap = new YTDlpWrap(ytDlpBinaryPath);
+
+        // Ejecutar yt-dlp y obtener el stream de audio
+        const readableStream = ytDlpWrap.execStream([
+            query,
+            '-f', 'bestaudio/best', // Obtén el mejor audio disponible
+            '--no-playlist', // Si deseas obtener solo el video en lugar de una lista de reproducción
+            '--audio-format', 'mp3' // Especificar formato para evitar problemas de codec
+        ]);
+
+        // Configurar el reproductor de audio
+        const speaker = new Speaker({
+            channels: 2, // Cambia a 1 para mono si es necesario
+            bitDepth: 16,
+            sampleRate: 44100
+        });
+
+        // Reproducir el audio
+        readableStream.pipe(speaker);
+
+        readableStream.on('error', (error) => {
+            console.error('Error in readableStream:', error);
+        });
+
+        console.log('Playing audio from query:', query);
+    } catch (error) {
+        console.error('Error handling youtube-query:', error);
     }
 });

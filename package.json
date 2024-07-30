@@ -41,19 +41,20 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
-    "electron": "^31.2.0",
-    "electron-builder": "^24.13.3",
-    "fs": "^0.0.1-security",
-    "lavalink-client": "^2.2.0",
-    "node-fs": "^0.1.7",
+    "electron": "31.3.1",
+    "electron-builder": "24.13.3",
+    "fs": "0.0.1-security",
+    "node-fs": "0.1.7",
     "standart": "6.1.0"
   },
   "eslintConfig": {
     "extends": "standard"
   },
   "dependencies": {
-    "fs": "^0.0.1-security",
-    "lavalink-client": "^2.2.0",
-    "node-fs": "^0.1.7"
+    "fs": "0.0.1-security",
+    "node-fs": "0.1.7",
+    "play-sound": "^1.1.6",
+    "speaker": "^0.5.5",
+    "yt-dlp-wrap": "^2.3.12"
   }
 }
